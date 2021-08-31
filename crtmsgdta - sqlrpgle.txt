@@ -1,0 +1,46 @@
+        // sqlrpgle program names CRTMSGDTA to be 
+        // called within function msg_file_data
+        dcl-s cmdstr   char(350) inz;                  
+        dcl-s cmdlen   zoned(4) inz;                   
+        dcl-ds jobdta psds;                            
+              job#   zoned(6) pos(264);                
+              jobuser char(10) pos(254);               
+              jobnm  char(10) pos(244);                
+        end-ds;                                        
+                                                       
+                                                       
+        exec sql set option commit = *none,            
+                            closqlcsr = *endmod;       
+                                                       
+                                                       
+        clear cmdstr;                                  
+        cmdstr = 'DLTOBJ QTEMP/MSGFDMP *FILE';         
+        cmdlen = %len(%trim(cmdstr));                  
+        exec sql call qsys2.qcmdexc(:cmdstr, :cmdlen); 
+        
+        cmdstr = 'CRTPF QTEMP/MSGFDMP RCDLEN(200)';                     
+        cmdlen = %len(%trim(cmdstr));                                   
+        exec sql call qsys2.qcmdexc(:cmdstr, :cmdlen);                  
+                                                                        
+        clear cmdstr;                                                   
+        cmdstr = 'DSPMSGD RANGE(*FIRST *LAST) MSGF(R50_001/VAIMSGF) ' + 
+                 'OUTPUT(*PRINT)';                                      
+        cmdlen = %len(%trim(cmdstr));                                   
+        exec sql call qsys2.qcmdexc(:cmdstr, :cmdlen);                  
+                                                                        
+        clear cmdstr;                                                   
+        cmdstr = 'CPYSPLF FILE(QPMSGD) TOFILE(QTEMP/MSGFDMP) ' +        
+                 'JOB(' + %trim(%char(job#)) + '/' + %trim(jobuser) +   
+                 '/' + %trim(jobnm) + ') MBROPT(*ADD)';                 
+        cmdlen = %len(%trim(cmdstr));                                   
+        exec sql call qsys2.qcmdexc(:cmdstr, :cmdlen);                  
+                                                                        
+        clear cmdstr;                                                   
+        cmdstr = 'DLTSPLF FILE(QPMSGD) ' +                              
+                 'JOB(' + %trim(%char(job#)) + '/' + %trim(jobuser) +
+                 '/' + %trim(jobnm) + ')';                           
+        cmdlen = %len(%trim(cmdstr));                                
+        exec sql call qsys2.qcmdexc(:cmdstr, :cmdlen);               
+                                                                     
+        *inlr = *on;                                                 
+        return;                                                      

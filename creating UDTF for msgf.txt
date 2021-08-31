@@ -1,0 +1,86 @@
+CREATE FUNCTION PIOLIB.MSG_FILE_DATA ()                           
+returns table(msg_id  char(7),                                    
+              msg     char(100),                                  
+              msg_txt char(400))                                  
+language sql          
+MODIFIES SQL DATA                                            
+begin                                                             
+    CALL PIOLIB.CRTMSGDTA;
+	
+return                                                            
+with t1 as (                                                      
+select rrn(a) as recno, a.msgfdmp msg from qtemp.msgfdmp a),                
+t2 as (                                                           
+select * from t1 where recno > 3  ),                              
+t3 as (                                                           
+select a.* from t2 a , t2 b where substr(b.msg,4,8) = 'Severity'  
+and b.recno = a.recno + 1                                      and
+substr(a.msg,58,6)<>'(Forma' and substr(a.msg,4,5)<>'Coded'    and
+substr(a.msg,4,5)<>'Alert' and substr(a.msg,4,4)<>'Log '       and
+substr(a.msg,4,9) <>'Message l' and substr(a.msg,4,5)<>'Data '    
+ union                                                            
+select a.* from t2 a , t2 b where substr(b.msg,4,8) = 'Severity'  
+and b.recno = a.recno + 2                                      and
+substr(a.msg,58,6)<>'(Forma' and substr(a.msg,4,5)<>'Coded'    and
+substr(a.msg,4,5)<>'Alert' and substr(a.msg,4,4)<>'Log '       and
+substr(a.msg,4,9) <>'Message l' and substr(a.msg,4,5)<>'Data '    
+ union                                                            
+select a.* from t2 a , t2 b where substr(b.msg,4,8) = 'Severity'  
+and b.recno = a.recno + 3                                      and
+substr(a.msg,58,6)<>'(Forma' and substr(a.msg,4,5)<>'Coded'    and
+substr(a.msg,4,5)<>'Alert' and substr(a.msg,4,4)<>'Log '       and
+substr(a.msg,4,9) <>'Message l' and substr(a.msg,4,5)<>'Data '    
+union                                                             
+select a.* from t2 a , t2 b where substr(b.msg,4,8) = 'Severity'  
+and b.recno = a.recno + 4                                      and
+substr(a.msg,58,6)<>'(Forma' and substr(a.msg,4,5)<>'Coded'    and
+substr(a.msg,4,5)<>'Alert' and substr(a.msg,4,4)<>'Log '       and
+substr(a.msg,4,9) <>'Message l' and substr(a.msg,4,5)<>'Data '    
+union                                                             
+select a.* from t2 a , t2 b where substr(b.msg,4,8) = 'Severity'  
+and b.recno = a.recno + 5                                      and
+substr(a.msg,58,6)<>'(Forma' and substr(a.msg,4,5)<>'Coded'    and
+substr(a.msg,4,5)<>'Alert' and substr(a.msg,4,4)<>'Log '       and
+substr(a.msg,4,9) <>'Message l' and substr(a.msg,4,5)<>'Data '    
+union                                                             
+select a.* from t2 a , t2 b where substr(b.msg,4,8) = 'Severity'  
+and b.recno = a.recno + 6                                      and
+substr(a.msg,58,6)<>'(Forma' and substr(a.msg,4,5)<>'Coded'    and
+substr(a.msg,4,5)<>'Alert' and substr(a.msg,4,4)<>'Log '       and
+substr(a.msg,4,9) <>'Message l' and substr(a.msg,4,5)<>'Data '    
+union                                                             
+select a.* from t2 a , t2 b where substr(b.msg,4,8) = 'Severity'  
+and b.recno = a.recno + 7                                      and
+substr(a.msg,58,6)<>'(Forma' and substr(a.msg,4,5)<>'Coded'    and
+substr(a.msg,4,5)<>'Alert' and substr(a.msg,4,4)<>'Log '       and
+substr(a.msg,4,9) <>'Message l' and substr(a.msg,4,5)<>'Data '),  
+t4 as (                                                           
+select * from t3 where substr(msg,6,13) <>'Modification ' ),      
+t5 as (                                                           
+select a.msg ,                                                    
+(select m.msg from t4 m where m.recno=a.recno+1) msg1,      
+(select m.msg from t4 m where m.recno=a.recno+2) msg2,      
+(select m.msg from t4 m where m.recno=a.recno+3) msg3,      
+(select m.msg from t4 m where m.recno=a.recno+4) msg4,      
+(select m.msg from t4 m where m.recno=a.recno+5) msg5       
+from t4 a where substr(a.msg, 2, 1) <> ' ' ),                     
+t6 as (                                                           
+select msg,                                                       
+case when msg1 is null then '~' else msg1 end msg1,               
+case when msg2 is null then '~' else msg2 end msg2,                 
+case when msg3 is null then '~' else msg3 end msg3,                 
+case when msg4 is null then '~' else msg4 end msg4,                 
+case when msg5 is null then '~' else msg5 end msg5                  
+from t5 ),                                                          
+t7 as (                                                             
+select msg as msg_id,                                               
+trim(msg1) msg, trim(msg2)||' '||trim(msg3)||' '||                  
+            trim(msg4)||' '||trim(msg5) as msg_txt from t6 )        
+select rpad(trim(msg_id),7) as msg_id,                              
+rpad(translate(replace(msg, 'Message . . . . :   ', ''),' ','~')    
+,100) as msg,                                                       
+rpad(translate(replace(msg_txt, 'Message . . . . :   ', ''),' ','~')
+,400) as msg_txt                                                    
+from t7 order by msg_id;                                            
+end                                                                 
+                      
